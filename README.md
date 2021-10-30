@@ -5,12 +5,14 @@ James Hubbard
 
 Jack Myers
 
-Bartos Stoppel
+Bartosz Stoppel
 
 ## Tentative Feature List
     - 8-voice polyphonic
+	Chords
 	- MIDI IN/OUT/THRU
 	- Waveform presets read from SD card
+	Modify stepping through saved wavetables
 	- Faux oscilloscope display
 
 ## Task list
