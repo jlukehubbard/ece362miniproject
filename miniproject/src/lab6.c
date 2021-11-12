@@ -1,91 +1,96 @@
 
 //=============================================================================
-// ECE 362 lab experiment 6 -- Analog Input/Output and DMA
-//=============================================================================
 
 #include "stm32f0xx.h"
 #include <string.h> // for memset() declaration
 #include <math.h>   // for MA_PI
 
 // Be sure to change this to your login...
-const char login[] = "myers395";
-
+#define WAVENUM 4
+#define VOLUME 2048
+#define N 1000
+#define RATE 20000
+int step = 0;
+int offset = 0;
+int volume = 2048;
+short int wavetable[WAVENUM][N];
+uint8_t wavenum = 0;
 
 //===========================================================================
 // 2.1 Configuring GPIO
 //===========================================================================
 void enable_ports(void) {
+    RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+    GPIOC->MODER &= ~(GPIO_MODER_MODER0|GPIO_MODER_MODER1|GPIO_MODER_MODER2);
+    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPDR0|GPIO_PUPDR_PUPDR1|GPIO_PUPDR_PUPDR2);
+    GPIOC->PUPDR |= GPIO_PUPDR_PUPDR0_1|GPIO_PUPDR_PUPDR1_1|GPIO_PUPDR_PUPDR2_1;
 }
-
-//===========================================================================
-// 2.2 SPI Output one 7 segment display
-//===========================================================================
-uint8_t waveTableIndex = 0x00;
 extern const char font[];
 
 //===========================================================================
-// 2.3 Debouncing a Keypad
+// 2.3 Button Interrupt
 //===========================================================================
-const char keymap[] = "DCBA#9630852*741";
-uint8_t hist[16];
-uint8_t col;
-char queue[2];
-int qin;
-int qout;
+void init_interrupts(void){
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
-int read_buttonpress(uint16_t *addr, int n)
-{
-    //addr IDR for gpio port
-    //bit of gpio port that button is on
+    //Configure GPIO ports for interrupt on C
+    SYSCFG->EXTICR[0] &= ~(SYSCFG_EXTICR1_EXTI0|SYSCFG_EXTICR1_EXTI2);
+    SYSCFG->EXTICR[1] &= ~(SYSCFG_EXTICR2_EXTI4);
+    SYSCFG->EXTICR[0] |= (0x2|0x2<<8);
+    SYSCFG->EXTICR[1] |= (0X2);
+    //Rising edge trigger
+    EXTI->RTSR |= (EXTI_RTSR_TR0|EXTI_RTSR_TR2|EXTI_RTSR_TR4);
+    //Disable falling edge trigger
+    EXTI->FTSR &= ~(EXTI_FTSR_TR0|EXTI_FTSR_TR2|EXTI_FTSR_TR4);
+    //Unmask Interrupt
+    EXTI->IMR |= (EXTI_IMR_MR0|EXTI_IMR_MR2|EXTI_IMR_MR4);
 
-    return *addr & (0x1 << n);
+    //Enable Interrupts
+    NVIC_EnableIRQ(EXTI0_1_IRQn);
+    NVIC_EnableIRQ(EXTI2_3_IRQn);
+    NVIC_EnableIRQ(EXTI4_15_IRQn);
+
+    NVIC_SetPriority(EXTI0_1_IRQn,1); //Change priority based on sound generation
+    NVIC_SetPriority(EXTI2_3_IRQn,1);
+    NVIC_SetPriority(EXTI4_15_IRQn,1);
 }
 
-void push_queue(int n) {
-    n = (n & 0xff) | 0x80;
-    queue[qin] = n;
-    qin ^= 1;
+void EXTI0_1_IRQHandler(void){
+    EXTI->PR |= EXTI_PR_PR0;
+    if(wavenum == (WAVENUM - 1)){
+        wavenum = 0;
+    }
+    else
+        wavenum++;
 }
 
-uint8_t pop_queue() {
-    uint8_t tmp = queue[qout] & 0x7f;
-    queue[qout] = 0;
-    qout ^= 1;
-    return tmp;
-}
-
-void update_history(int c, int rows)
-{
-    for(int i = 0; i < 4; i++) {
-        hist[4*c+i] = (hist[4*c+i]<<1) + ((rows>>i)&1);
-        if (hist[4*c+i] == 1)
-          push_queue(4*c+i);
+void EXTI2_3_IRQHandler(void){
+    EXTI->PR |= EXTI_PR_PR2;
+    if (volume < VOLUME){
+        volume += 128;
     }
 }
 
-char get_buttonpress() {
-    for(;;) {
-        asm volatile ("wfi" : :);   // wait for an interrupt
-        if (queue[qout] == 0)
-            continue;
-        return keymap[pop_queue()];
+void EXTI4_15_IRQHandler(void){
+    EXTI->PR |= EXTI_PR_PR4;
+    if (volume > 0){
+        volume -= 128;
     }
 }
 
 //===========================================================================
 // 2.5 Output Sine Wave
 //===========================================================================
-#define N 1000
-#define RATE 20000
-short int wavetable[N];
-int step = 0;
-int offset = 0;
-int volume = 2048;
 
 void init_wavetable(void) {
-    for(int i=0; i < N; i++){
-        wavetable[i] = 32767 * sin(2 * M_PI * i / N);
+    for(int i=0; i < WAVENUM; i++){
+        for(int ii=0; ii < N; ii++){
+            wavetable[i][ii] = 32767 * sin(2 * (i+1) * M_PI * ii / N);
+        }
     }
+    //for(int ii=0; ii < N; ii++){
+    //    wavetable[WAVENUM - 1][ii] = -32767 + ((65534/20000) * (ii % 20000));
+    //}
 }
 
 void set_freq(float f) {
@@ -121,7 +126,7 @@ void TIM7_IRQHandler(void) {
     if (offset>>16 > N){
         offset -= N<<16;
     }
-    int sample = wavetable[offset>>16];
+    int sample = wavetable[wavenum][offset>>16];
     sample *= volume;
     sample = sample>>16;
     sample += 2048;
@@ -134,6 +139,7 @@ void TIM7_IRQHandler(void) {
 //===========================================================================
 int main(void)
 {
+    init_interrupts();
     init_wavetable();
     set_freq(150);
     setup_dac();
