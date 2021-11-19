@@ -56,11 +56,7 @@ void init_interrupts(void){
 
 void EXTI0_1_IRQHandler(void){
     EXTI->PR |= EXTI_PR_PR0;
-    if(wavenum == (WAVENUM - 1)){
-        wavenum = 0;
-    }
-    else
-        wavenum++;
+    wavenum = (++wavenum % 4);
 }
 
 void EXTI2_3_IRQHandler(void){
@@ -94,6 +90,10 @@ void init_wavetable(void) {
 
 void set_freq(float f) {
     step = f * N / RATE * (1<<16);
+}
+
+void set_volume(int vol) {
+	volume = vol;
 }
 
 void setup_dac() {
