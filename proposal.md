@@ -1,8 +1,8 @@
 # Proposal
 ## Briefly, what are you making and what are you making it out of?
-A polyphonic digital synthesizer with MIDI input capabilities. The microcontroller's timers and DAC will be used to synthesize audio, and the USART will be used to interact with MIDI.
+A polyphonic (10 voices) digital synthesizer with MIDI input capabilities. The microcontroller's timers and DAC will be used to synthesize audio, and the USART will be used to interact with MIDI.
 
-The OLED LCD will display the interface for switching between the wavetables stored on the microcontroller.
+The OLED LCD will display the interface for switching between the wavetables stored on the microcontroller's ROM.
 
 Components we plan to use:
   - SOC1602A OLED LCD Display
