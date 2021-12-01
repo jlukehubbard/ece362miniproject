@@ -1,4 +1,9 @@
 # Proposal
+
+Internal Peripherals:  DAC Timers SPI USART
+ 
+External Peripherals:  async serial SPI
+
 ## Briefly, what are you making and what are you making it out of?
 A polyphonic (10 voices) digital synthesizer with MIDI input capabilities. The microcontroller's timers and DAC will be used to synthesize audio, and the USART will be used to interact with MIDI.
 
