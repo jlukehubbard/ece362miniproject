@@ -3,7 +3,7 @@
   * @file      startup_stm32.s dedicated to STM32F091RCTx device
   * @author    Ac6
   * @version   V1.0.0
-  * @date      2021-10-26
+  * @date      2021-11-21
   ******************************************************************************
   */
 
