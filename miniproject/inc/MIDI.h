@@ -1,13 +1,12 @@
 #ifndef MIDI_H
 #define MIDI_H
 
-void note_off(int time, int chan, int key, int velo);
-void note_on(int time, int chan, int key, int velo);
-void key_pressure(int time, int chan, int key, int val);
-void control_change(int time, int chan, int ctrl, int val);
-void program_change(int time, int chan, int prog);
-void channel_pressure(int time, int chan, int val);
-void pitch_wheel_change(int time, int chan, int val);
-void midi_event(int time, int event, const uint8_t **pp);
+void note_off(uint8_t key, uint8_t velo);
+void note_on(uint8_t key, uint8_t velo);
+void key_pressure(uint8_t key, uint8_t val);
+void control_change(uint8_t ctrl, uint8_t val);
+void program_change(uint8_t prog);
+void channel_pressure(uint8_t val);
+void pitch_wheel_change(uint8_t val);
 
 #endif
