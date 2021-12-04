@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <string.h>
-#include "stm32f0xx.h"
-#include "midi.h"
+#include "../CMSIS/device/stm32f0xx.h"
 
 void note_off(int key, int velo)
 {
@@ -12,7 +11,7 @@ void note_on(int key, int velo)
 }
 
 void configure_USART_GPIO(void) {
-	RCC -> AHBENR |= GPIOAEN;
+	RCC -> AHBENR |= RCC_AHBENR_GPIOAEN;
 
 	GPIOA -> MODER &= ~(GPIO_MODER_MODER9 | GPIO_MODER_MODER10);
 	GPIOA -> MODER |= GPIO_MODER_MODER9_1 | GPIO_MODER_MODER10_1;
