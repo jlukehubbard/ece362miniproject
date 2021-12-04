@@ -148,7 +148,7 @@ void start_MIDI_RX() {
 		uint8_t type = byte & 0xf0;
 
 		switch(type) {
-		    case 0x80: { uint8_t note = getchar(); uint8_t velo = getchar;
+		    case 0x80: { uint8_t note = getchar(); uint8_t velo = getchar();
 		                 note_off(note, velo); break;
 		               }
 		    case 0x90: { uint8_t note = getchar(); uint8_t velo = getchar();
@@ -164,7 +164,7 @@ void start_MIDI_RX() {
 		                 program_change(prog); break;
 		               }
 		    case 0xd0: { uint8_t value = getchar();
-		                 channel_pressure(); break;
+		                 channel_pressure(value); break;
 		               }
 		    case 0xe0: { uint8_t l = getchar(); uint8_t h = getchar();
 		                 pitch_wheel_change((h<<7)+l); break;

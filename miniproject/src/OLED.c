@@ -1,4 +1,5 @@
-#include "stm32f0xx.h"
+#include "../CMSIS/device/stm32f0xx.h"
+#include "../inc/MIDI.h"
 #include <string.h> // for memset() declaration
 #include <math.h>   // for MA_PI
 
