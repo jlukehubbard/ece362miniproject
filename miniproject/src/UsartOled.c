@@ -55,7 +55,7 @@ void init_usart1(void){
     while((USART1->ISR & USART_ISR_TEACK) == 0); //TRANSMITTING
     while((USART1->ISR & USART_ISR_REACK) == 0); //RECIEVING
 }
-int getchar(void) {
+uint8_t getchar(void) {
      while (!(USART1->ISR & USART_ISR_RXNE)) { }
      int c = USART1->RDR;
      return c;
@@ -94,14 +94,14 @@ void init_noteList(){
         noteList[i] = 0x0000;
     }
 }
-void add_note(uint16_t hexCode){
+void add_note(uint8_t keyCode, uint8_t velocity){
     if(noteListIndex >= NOTELISTLENGTH){
         return;
     }
-    noteList[noteListIndex] = hexCode;
+    noteList[noteListIndex] = keyCode|(velocity<<8);
     noteListIndex++;
 }
-void remove_note(uint16_t hexCode){
+void remove_note(uint8_t hexCode){
     for(int i=0;i<NOTELISTLENGTH;i++){
         if((noteList[i]&0xff) == hexCode){
             uint16_t tmp = 0x0000;
@@ -130,20 +130,36 @@ void display_note_list(){
         oledDisp[3*i + 21] = 0x200|hexToChar[((noteList[i]>>8) & 0x0f)];
     }
 }
-void check_on_off(){
+void check_on_off(void){
+    uint8_t usartByte;
+    uint8_t command;
     for(;;) {
-        int c = getchar();
-        if(c == 0x90){
-            c = getchar(); //KEY
-            c |= (getchar()<<8); //VELOCITY
-            add_note(c);
+        usartByte = getchar();
+        if(usartByte == 0x90){
+            command = usartByte;
+            on_command(0x00);
         }
-        if(c == 0x80){
-            c = getchar();
-            remove_note(c); //KEY
+        else if(usartByte == 0x80){
+            command = usartByte;
+            off_command(0x00);
+        }
+        else{
+            if(command == 0x90){on_command(usartByte);}
+            else if(command == 0x80){off_command(usartByte);}
         }
         display_note_list();
     }
+}
+void on_command(uint8_t keyCode){
+    if(keyCode == 0x00){keyCode = getchar();}
+    uint8_t velocity = getchar();
+    if(velocity == 0){remove_note(keyCode);} //IF RUNNING STATUS
+    else{add_note(keyCode,velocity);}
+}
+void off_command(uint8_t keyCode){
+    if(keyCode == 0x00){keyCode = getchar();}
+    getchar();
+    remove_note(keyCode);
 }
 
 //===========================================================================
