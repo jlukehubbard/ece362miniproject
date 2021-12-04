@@ -4,23 +4,26 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../src/MIDI.c \
+../src/OLED.c \
+../src/RickMIDI.c \
 ../src/main.c \
-../src/midi.c \
-../src/miditerpret.c \
 ../src/syscalls.c \
 ../src/system_stm32f0xx.c 
 
 OBJS += \
+./src/MIDI.o \
+./src/OLED.o \
+./src/RickMIDI.o \
 ./src/main.o \
-./src/midi.o \
-./src/miditerpret.o \
 ./src/syscalls.o \
 ./src/system_stm32f0xx.o 
 
 C_DEPS += \
+./src/MIDI.d \
+./src/OLED.d \
+./src/RickMIDI.d \
 ./src/main.d \
-./src/midi.d \
-./src/miditerpret.d \
 ./src/syscalls.d \
 ./src/system_stm32f0xx.d 
 

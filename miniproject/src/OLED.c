@@ -28,95 +28,6 @@ void nano_wait(unsigned int n) {
             "        bgt repeat\n" : : "r"(n) : "r0", "cc");
 }
 
-//===========================================================================
-// USART MIDI FUNCTIONS
-//===========================================================================
-void init_usart1(void){
-
-    //CONFIGURE PA9 AND PA10
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-    GPIOA->MODER &= ~(GPIO_MODER_MODER9|GPIO_MODER_MODER10);
-    GPIOA->MODER |= (GPIO_MODER_MODER9_1|GPIO_MODER_MODER10_1);
-    GPIOA->AFR[1] &= ~(GPIO_AFRH_AFR9|GPIO_AFRH_AFR10);
-    GPIOA->AFR[1] |= (0x1<<4|0x1<<8);
-
-    //CONFIGURE USART1
-    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-    USART1->CR1 &= ~(USART_CR1_UE);
-    USART1->CR1 &= ~(USART_CR1_M|USART_CR1_M<<8|USART_CR1_PCE|USART_CR1_OVER8);
-    USART1->CR1 |= USART_CR1_RE; //RECIEVING
-    USART1->CR1 |= USART_CR1_TE; //TRANSMITTING
-    USART1->CR2 &= ~(USART_CR2_STOP);
-
-    USART1->BRR = 0x600;
-
-    USART1->CR1 |= USART_CR1_UE;
-
-    while((USART1->ISR & USART_ISR_TEACK) == 0); //TRANSMITTING
-    while((USART1->ISR & USART_ISR_REACK) == 0); //RECIEVING
-}
-uint8_t getchar(void) {
-     while (!(USART1->ISR & USART_ISR_RXNE)) { }
-     int c = USART1->RDR;
-     return c;
-}
-
-//#define circBuf
-#ifdef circBuf
-uint8_t noteListFront = 0;
-uint8_t noteListRear = 1;
-uint8_t noteList[NOTELISTLENGTH] = { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
-
-void add_note(uint8_t hexCode){
-    if (noteListFront == noteListRear) {
-        noteListFront = (noteListFront + 1) % NOTELISTLENGTH;
-    }
-    noteList[noteListRear] = hexCode;
-    noteListRear = (noteListRear + 1) % NOTELISTLENGTH;
-}
-void remove_note(uint8_t hexCode){
-    for (int i = 0; i < NOTELISTLENGTH; i++) {
-        if (noteList[(i + noteListFront) % NOTELISTLENGTH] == hexCode) {
-            for (int j = (i + noteListFront) % NOTELISTLENGTH; i < )
-        }
-    }
-}
-
-#endif
-
-#define arrBuf
-#ifdef arrBuf
-uint8_t noteListIndex = 0;
-uint16_t noteList[NOTELISTLENGTH];
-
-void init_noteList(){
-    for(int i=0;i<NOTELISTLENGTH;i++){
-        noteList[i] = 0x0000;
-    }
-}
-void add_note(uint8_t keyCode, uint8_t velocity){
-    if(noteListIndex >= NOTELISTLENGTH){
-        return;
-    }
-    noteList[noteListIndex] = keyCode|(velocity<<8);
-    noteListIndex++;
-}
-void remove_note(uint8_t hexCode){
-    for(int i=0;i<NOTELISTLENGTH;i++){
-        if((noteList[i]&0xff) == hexCode){
-            uint16_t tmp = 0x0000;
-            noteList[i] = tmp;
-            for(int ii=i;ii<NOTELISTLENGTH-1;ii++){
-                tmp = noteList[ii + 1];
-                noteList[ii + 1] = noteList[ii];
-                noteList[ii] = tmp;
-            }
-            noteListIndex--;
-            return;
-        }
-    }
-}
-#endif
 void display_note_list(){
     for(int i=0;i<5;i++){
         //SHOW KEYCODE
@@ -161,7 +72,6 @@ void off_command(uint8_t keyCode){
     getchar();
     remove_note(keyCode);
 }
-
 //===========================================================================
 // SPI OLED FUNCTIONS
 //===========================================================================
