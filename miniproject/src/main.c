@@ -1,5 +1,4 @@
 #include "../CMSIS/device/stm32f0xx.h"
-#include "../inc/MIDI.h"
 #include <string.h> // for memset() declaration
 #include <math.h>   // for MA_PI
 
@@ -7,10 +6,11 @@
 #define VOLUME 2048
 #define N 1000
 #define RATE 20000
+#define TWELFTHROOT 1.0595
 int step = 0;
 int offset = 0;
 int volume = 2048;
-short int wavetable[WAVENUM][N];
+uint32_t wavetable[WAVENUM][N];
 uint8_t wavenum = 0;
 #define NOTELISTLENGTH 10
 uint8_t noteListIndex = 0;
@@ -135,21 +135,7 @@ void init_tim7(void) {
     NVIC->ISER[0] |= 1 << TIM7_IRQn;
 }
 
-void TIM7_IRQHandler(void) {
-    DAC->SWTRIGR |= DAC_SWTRIGR_SWTRIG1;
-    TIM7->SR &= ~TIM_SR_UIF;
-    //step = note_to_step(noteList[0]);
-    volume = note_to_volume(noteList[0]);
-    offset += step;
-    if (offset>>16 > N){
-        offset -= N<<16;
-    }
-    int sample = wavetable[wavenum][offset>>16];
-    sample *= volume;
-    sample = sample>>16;
-    sample += 2048;
-    DAC->DHR12R1 = sample;
-}
+
 
 
 
@@ -216,21 +202,88 @@ void remove_note(uint8_t hexCode){
         }
     }
 }
+
+void check_on_off(void){
+    uint8_t usartByte;
+    uint8_t command;
+    for(;;) {
+        usartByte = getchar();
+        if(usartByte == 0x90){
+            command = usartByte;
+            on_command(0x00);
+        }
+        else if(usartByte == 0x80){
+            command = usartByte;
+            off_command(0x00);
+        }
+        else{
+            if(command == 0x90){on_command(usartByte);}
+            else if(command == 0x80){off_command(usartByte);}
+        }
+        display_note_list();
+    }
+}
+void on_command(uint8_t keyCode){
+    if(keyCode == 0x00){keyCode = getchar();}
+    uint8_t velocity = getchar();
+    if(velocity == 0){remove_note(keyCode);} //IF RUNNING STATUS
+    else{add_note(keyCode,velocity);}
+}
+void off_command(uint8_t keyCode){
+    if(keyCode == 0x00){keyCode = getchar();}
+    getchar();
+    remove_note(keyCode);
+}
+
+void TIM7_IRQHandler(void) {
+    DAC->SWTRIGR |= DAC_SWTRIGR_SWTRIG1;
+    TIM7->SR &= ~TIM_SR_UIF;
+    //step = note_to_step(noteList[0]);
+    volume = note_to_volume(noteList[0]);
+    offset += step;
+    if (offset>>16 > N){
+        offset -= N<<16;
+    }
+    int sample = wavetable[wavenum][offset>>16];
+    sample *= volume;
+    sample = sample>>16;
+    sample += 2048;
+    DAC->DHR12R1 = sample;
+}
 #endif
 
 #define llbuf
 #ifdef llbuf
 
+uint8_t prog = 0;
 Node *notelist = newNode(NULL, NULL, NULL);
 
 void note_off(uint8_t key, uint8_t velo) {
 	notelist = listDelete(notelist, key);
 }
-
 void note_on(uint8_t key, uint8_t velo) {
 	notelist = listInsert(notelist, key, velo);
 }
 
+void TIM7_IRQHandler(void) {
+    //trigger dac, ack interrupt
+	DAC->SWTRIGR |= DAC_SWTRIGR_SWTRIG1;
+    TIM7->SR &= ~TIM_SR_UIF;
+
+    int sample = 0;
+    int tmpsmp = 0;
+
+    Node *curr = notelist;
+    while (curr -> next) {
+    	curr -> offset += curr -> step;
+    	tmpsmp = wavetable[prog][offset >> 16];
+    	tmpsmp *= (curr -> velo) << 3;
+    	tmpsmp = tmpsmp >> 16;
+    	tmpsmp += 2048;
+    	sample += tmpsmp;
+    }
+    DAC -> DHR12R1 = sample;
+}
 
 #endif
 
@@ -357,37 +410,7 @@ void display_note_list(){
     }
 }
 
-void check_on_off(void){
-    uint8_t usartByte;
-    uint8_t command;
-    for(;;) {
-        usartByte = getchar();
-        if(usartByte == 0x90){
-            command = usartByte;
-            on_command(0x00);
-        }
-        else if(usartByte == 0x80){
-            command = usartByte;
-            off_command(0x00);
-        }
-        else{
-            if(command == 0x90){on_command(usartByte);}
-            else if(command == 0x80){off_command(usartByte);}
-        }
-        display_note_list();
-    }
-}
-void on_command(uint8_t keyCode){
-    if(keyCode == 0x00){keyCode = getchar();}
-    uint8_t velocity = getchar();
-    if(velocity == 0){remove_note(keyCode);} //IF RUNNING STATUS
-    else{add_note(keyCode,velocity);}
-}
-void off_command(uint8_t keyCode){
-    if(keyCode == 0x00){keyCode = getchar();}
-    getchar();
-    remove_note(keyCode);
-}
+
 
 
 

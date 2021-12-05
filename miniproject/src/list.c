@@ -1,5 +1,9 @@
 #include "../inc/list.h"
 
+#define N 1000
+#define RATE 20000
+#define TWELFTHROOT 1.0595
+
 Node *listInsert(Node *list, uint8_t note, uint8_t velo) {
 	Node *curr = list;
 	Node *new = newNode(note, velo, (Node *) NULL);
@@ -39,6 +43,9 @@ Node *newNode(uint8_t note, uint8_t velo, Node *next) {
 	new -> note = note;
 	new -> velo = velo;
 	new -> next = next;
+	float f = exp(TWELFTHROOT, (new -> note) - 0x45) * 440;
+	new -> step = f * N / RATE * (1<<16);
+	new -> offset = 0;
 
 	return new;
 }
