@@ -11,7 +11,7 @@
 #define RATE 20000
 #define TWELFTHROOT 1.0595
 
-uint32_t wavetable[WAVENUM][N];
+int32_t wavetable[WAVENUM][N];
 uint8_t wavenum = 0;
 Node **notelistPointer;
 

@@ -7,8 +7,8 @@
 typedef struct _Node {
    uint8_t note;
    uint8_t velo;
-   int step;
-   int offset;
+   uint32_t step;
+   uint32_t offset;
    struct _Node *next;
 } Node;
 
