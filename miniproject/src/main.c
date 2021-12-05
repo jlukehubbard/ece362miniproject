@@ -10,9 +10,7 @@
 #define N 1000
 #define RATE 20000
 #define TWELFTHROOT 1.0595
-int step = 0;
-int offset = 0;
-int volume = 2048;
+
 uint32_t wavetable[WAVENUM][N];
 uint8_t wavenum = 0;
 Node **notelistPointer;
@@ -177,6 +175,10 @@ uint8_t getchar(void) {
 //#define arrBuf
 #ifdef arrBuf
 
+int step = 0;
+int offset = 0;
+int volume = 2048;
+
 void init_noteList(){
     for(int i=0;i<NOTELISTLENGTH;i++){
         noteList[i] = 0x0000;
@@ -292,7 +294,7 @@ void TIM7_IRQHandler(void) {
     Node *curr = *notelistPointer;
     while (curr -> next) {
     	curr -> offset += curr -> step;
-    	tmpsmp = wavetable[prog][offset >> 16];
+    	tmpsmp = wavetable[prog][(curr -> offset) >> 16];
     	tmpsmp *= (curr -> velo) << 3;
     	tmpsmp = tmpsmp >> 16;
     	tmpsmp += 2048;
@@ -303,6 +305,7 @@ void TIM7_IRQHandler(void) {
 
 #endif
 
+#define skeletonFunc
 #ifdef skeletonFunc
 void note_off(int key, int velo)
 {
@@ -489,4 +492,6 @@ int main(void)
     init_tim7();
 
     //check_on_off();
+
+    start_MIDI_RX();
 }
