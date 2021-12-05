@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifndef LIST_H
 #define LIST_H

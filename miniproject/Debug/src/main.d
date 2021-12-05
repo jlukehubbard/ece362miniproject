@@ -28,7 +28,7 @@ src/main.o: ../src/main.c ../src/../CMSIS/device/stm32f0xx.h \
  /home/james/git/ece362miniproject/miniproject/StdPeriph_Driver/inc/stm32f0xx_usart.h \
  /home/james/git/ece362miniproject/miniproject/StdPeriph_Driver/inc/stm32f0xx_wwdg.h \
  /home/james/git/ece362miniproject/miniproject/StdPeriph_Driver/inc/stm32f0xx_misc.h \
- ../src/../inc/MIDI.h
+ ../src/../inc/list.h
 
 ../src/../CMSIS/device/stm32f0xx.h:
 
@@ -90,4 +90,4 @@ src/main.o: ../src/main.c ../src/../CMSIS/device/stm32f0xx.h \
 
 /home/james/git/ece362miniproject/miniproject/StdPeriph_Driver/inc/stm32f0xx_misc.h:
 
-../src/../inc/MIDI.h:
+../src/../inc/list.h:

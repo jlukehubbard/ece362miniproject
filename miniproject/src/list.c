@@ -1,4 +1,5 @@
 #include "../inc/list.h"
+#include <math.h>
 
 #define N 1000
 #define RATE 20000
@@ -43,7 +44,7 @@ Node *newNode(uint8_t note, uint8_t velo, Node *next) {
 	new -> note = note;
 	new -> velo = velo;
 	new -> next = next;
-	float f = exp(TWELFTHROOT, (new -> note) - 0x45) * 440;
+	float f = pow(TWELFTHROOT, (new -> note) - 0x45) * 440;
 	new -> step = f * N / RATE * (1<<16);
 	new -> offset = 0;
 

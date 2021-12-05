@@ -1,6 +1,9 @@
 #include "../CMSIS/device/stm32f0xx.h"
 #include <string.h> // for memset() declaration
 #include <math.h>   // for MA_PI
+#include "../inc/list.h"
+#include <stdlib.h>
+#include <stdint.h>
 
 #define WAVENUM 1
 #define VOLUME 2048
@@ -12,9 +15,8 @@ int offset = 0;
 int volume = 2048;
 uint32_t wavetable[WAVENUM][N];
 uint8_t wavenum = 0;
-#define NOTELISTLENGTH 10
-uint8_t noteListIndex = 0;
-uint16_t noteList[NOTELISTLENGTH];
+Node **notelistPointer;
+
 
 //OLED CHARACTER MAP
 uint16_t oledDisp[34] =
@@ -65,7 +67,7 @@ void init_interrupts(void){
 
 void EXTI0_1_IRQHandler(void){
     EXTI->PR |= EXTI_PR_PR0;
-    wavenum = (++wavenum % 4);
+    wavenum = ((wavenum + 1) % 4);
 }
 
 void EXTI2_3_IRQHandler(void){
@@ -250,19 +252,33 @@ void TIM7_IRQHandler(void) {
     sample += 2048;
     DAC->DHR12R1 = sample;
 }
+
+void display_note_list(){
+    for(int i=0;i<5;i++){
+        //SHOW KEYCODE
+        oledDisp[3*i + 2] = 0x200|' ';
+        oledDisp[3*i + 3] = 0x200|hexToChar[(noteList[i] & 0xf0)>>4];
+        oledDisp[3*i + 4] = 0x200|hexToChar[(noteList[i] & 0x0f)];
+
+        //SHOW VELOCITY
+        oledDisp[3*i + 19] = 0x200|' ';
+        oledDisp[3*i + 20] = 0x200|hexToChar[((noteList[i]>>8) & 0xf0)>>4];;
+        oledDisp[3*i + 21] = 0x200|hexToChar[((noteList[i]>>8) & 0x0f)];
+    }
+}
 #endif
 
 #define llbuf
 #ifdef llbuf
 
 uint8_t prog = 0;
-Node *notelist = newNode(NULL, NULL, NULL);
 
-void note_off(uint8_t key, uint8_t velo) {
-	notelist = listDelete(notelist, key);
+
+Node *note_off(Node *notelist, uint8_t key, uint8_t velo) {
+	return listDelete(notelist, key);
 }
-void note_on(uint8_t key, uint8_t velo) {
-	notelist = listInsert(notelist, key, velo);
+Node *note_on(Node *notelist, uint8_t key, uint8_t velo) {
+	return listInsert(notelist, key, velo);
 }
 
 void TIM7_IRQHandler(void) {
@@ -273,7 +289,7 @@ void TIM7_IRQHandler(void) {
     int sample = 0;
     int tmpsmp = 0;
 
-    Node *curr = notelist;
+    Node *curr = *notelistPointer;
     while (curr -> next) {
     	curr -> offset += curr -> step;
     	tmpsmp = wavetable[prog][offset >> 16];
@@ -358,6 +374,8 @@ End Note:
 void start_MIDI_RX() {
 	for (;;) {
 		uint8_t byte = 0;
+		Node *notelist = newNode(NULL, NULL, NULL);
+		notelistPointer = &notelist;
 
 		do	{
 			byte = getchar();
@@ -367,10 +385,10 @@ void start_MIDI_RX() {
 
 		switch(type) {
 		    case 0x80: { uint8_t note = getchar(); uint8_t velo = getchar();
-		                 note_off(note, velo); break;
+		                 note_off(notelist, note, velo); break;
 		               }
 		    case 0x90: { uint8_t note = getchar(); uint8_t velo = getchar();
-		                 note_on(note, velo); break;
+		                 note_on(notelist, note, velo); break;
 		               }
 		    case 0xa0: { uint8_t note = getchar(); uint8_t value = getchar();
 		                 key_pressure(note, value); break;
@@ -396,19 +414,7 @@ void nano_wait(unsigned int n) {
             "        bgt repeat\n" : : "r"(n) : "r0", "cc");
 }
 
-void display_note_list(){
-    for(int i=0;i<5;i++){
-        //SHOW KEYCODE
-        oledDisp[3*i + 2] = 0x200|' ';
-        oledDisp[3*i + 3] = 0x200|hexToChar[(noteList[i] & 0xf0)>>4];
-        oledDisp[3*i + 4] = 0x200|hexToChar[(noteList[i] & 0x0f)];
 
-        //SHOW VELOCITY
-        oledDisp[3*i + 19] = 0x200|' ';
-        oledDisp[3*i + 20] = 0x200|hexToChar[((noteList[i]>>8) & 0xf0)>>4];;
-        oledDisp[3*i + 21] = 0x200|hexToChar[((noteList[i]>>8) & 0x0f)];
-    }
-}
 
 
 
@@ -464,6 +470,7 @@ void enable_dma_oled() {
 
 int main(void)
 {
+
 	init_interrupts();
     // SPI OLED
     setup_dma_oled();
@@ -476,10 +483,10 @@ int main(void)
     setup_dac();
 
     // USART MIDI
-    init_noteList();
+    //init_noteList();
     init_usart1();
 
     init_tim7();
 
-    check_on_off();
+    //check_on_off();
 }
