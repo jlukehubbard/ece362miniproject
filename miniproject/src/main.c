@@ -296,10 +296,10 @@ void TIM7_IRQHandler(void) {
     	curr -> offset += curr -> step;
     	tmpsmp = wavetable[prog][(curr -> offset) >> 16];
     	tmpsmp *= (curr -> velo) << 3;
-    	tmpsmp = tmpsmp >> 16;
-    	tmpsmp += 2048;
     	sample += tmpsmp;
     }
+    sample = sample >> 16;
+    sample += 2048;
     DAC -> DHR12R1 = sample;
 }
 
