@@ -143,6 +143,9 @@ void check_on_off(void){
             command = usartByte;
             off_command(0x00);
         }
+        else if(usartByte == 0xFE){
+            continue; //IGNORE ACTIVE SENSING
+        }
         else{
             if(command == 0x90){on_command(usartByte);}
             else if(command == 0x80){off_command(usartByte);}
