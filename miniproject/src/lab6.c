@@ -228,7 +228,7 @@ void TIM7_IRQHandler(void) {
     DAC->SWTRIGR |= DAC_SWTRIGR_SWTRIG1;
     TIM7->SR &= ~TIM_SR_UIF;
     offset += step;
-    if (offset>>16 > N){A
+    if (offset>>16 > N){
         offset -= N<<16;
     }
     int sample = wavetable[offset>>16];

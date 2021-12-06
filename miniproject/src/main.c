@@ -9,6 +9,8 @@
 #define WAVENUM 1
 #define VOLUME 2048
 #define N 1000
+#define NSHIFT16 (N << 16)
+//#define RATE 20000
 #define RATE 20000
 int step = 0;
 int offset = 0;
@@ -21,6 +23,8 @@ uint16_t oledDisp[34] =
   0x0c0, 0x200|'V' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' };
 const char hexToChar[] =
 { 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x41,0x42,0x43,0x44,0x45,0x46 };
+
+void set_freq(float);
 
 void nano_wait(unsigned int n) {
     asm(    "        mov r0,%0\n"
@@ -47,6 +51,8 @@ void init_usart1(void){
     USART1->CR1 |= USART_CR1_RE; //RECIEVING
     USART1->CR1 |= USART_CR1_TE; //TRANSMITTING
     USART1->CR2 &= ~(USART_CR2_STOP);
+    //TESTING
+    USART1->CR3 |= USART_CR3_ONEBIT;
 
     USART1->BRR = 0x600;
 
@@ -56,9 +62,19 @@ void init_usart1(void){
     while((USART1->ISR & USART_ISR_REACK) == 0); //RECIEVING
 }
 uint8_t getchar(void) {
-     while (!(USART1->ISR & USART_ISR_RXNE)) { }
-     int c = USART1->RDR;
-     return c;
+
+    while (!(USART1->ISR & USART_ISR_RXNE)){
+        if(USART1->ISR & USART_ISR_ORE){
+            init_noteList();
+            USART1->ICR |= (USART_ICR_ORECF);
+        }
+    }
+    if(USART1->ISR & USART_ISR_ORE){
+         init_noteList();
+         USART1->ICR |= (USART_ICR_ORECF);
+    }
+    int c = USART1->RDR;
+    return c;
 }
 
 //#define circBuf
@@ -88,17 +104,23 @@ void remove_note(uint8_t hexCode){
 #ifdef arrBuf
 uint8_t noteListIndex = 0;
 uint16_t noteList[NOTELISTLENGTH];
+uint32_t steplist[NOTELISTLENGTH];
+uint32_t offsetlist[NOTELISTLENGTH];
 
 void init_noteList(){
     for(int i=0;i<NOTELISTLENGTH;i++){
         noteList[i] = 0x0000;
     }
+    noteListIndex = 0;
 }
 void add_note(uint8_t keyCode, uint8_t velocity){
+    remove_note(keyCode);
     if(noteListIndex >= NOTELISTLENGTH){
         return;
     }
     noteList[noteListIndex] = keyCode|(velocity<<8);
+    steplist[noteListIndex] = (pow(1.059,(keyCode-69)) * 440) * NSHIFT16 / RATE;
+    offsetlist[noteListIndex] = 0;
     noteListIndex++;
 }
 void remove_note(uint8_t hexCode){
@@ -133,36 +155,41 @@ void display_note_list(){
 void check_on_off(void){
     uint8_t usartByte;
     uint8_t command;
+    uint8_t velocity;
+    uint8_t keyCode;
     for(;;) {
         usartByte = getchar();
+
         if(usartByte == 0x90){
             command = usartByte;
-            on_command(0x00);
+            keyCode = getchar();
+            velocity = getchar();
+            if(velocity == 0){remove_note(keyCode);} //IF RUNNING STATUS
+            else{add_note(keyCode,velocity);}
         }
         else if(usartByte == 0x80){
             command = usartByte;
-            off_command(0x00);
+            keyCode = getchar();
+            getchar();
+            remove_note(keyCode);
         }
         else if(usartByte == 0xFE){
             continue; //IGNORE ACTIVE SENSING
         }
-        else{
-            if(command == 0x90){on_command(usartByte);}
-            else if(command == 0x80){off_command(usartByte);}
-        }
+        /*else{ //Running Status
+            if(command == 0x90){
+                uint8_t velocity = getchar();
+                if(velocity == 0){remove_note(keyCode);} //IF RUNNING STATUS
+                else{add_note(keyCode,velocity);}
+            }
+            else if(command == 0x80){
+                getchar();
+                remove_note(keyCode);
+            }
+        }*/
+
         display_note_list();
     }
-}
-void on_command(uint8_t keyCode){
-    if(keyCode == 0x00){keyCode = getchar();}
-    uint8_t velocity = getchar();
-    if(velocity == 0){remove_note(keyCode);} //IF RUNNING STATUS
-    else{add_note(keyCode,velocity);}
-}
-void off_command(uint8_t keyCode){
-    if(keyCode == 0x00){keyCode = getchar();}
-    getchar();
-    remove_note(keyCode);
 }
 
 //===========================================================================
@@ -261,13 +288,29 @@ void init_tim7(void) {
 void TIM7_IRQHandler(void) {
     DAC->SWTRIGR |= DAC_SWTRIGR_SWTRIG1;
     TIM7->SR &= ~TIM_SR_UIF;
-    //step = note_to_step(noteList[0]);
-    volume = note_to_volume(noteList[0]);
+    uint32_t tmpsmp = 0;
+    uint32_t sample = 0;
+
+    /*
     offset += step;
     if (offset>>16 > N){
         offset -= N<<16;
     }
     int sample = wavetable[wavenum][offset>>16];
+    sample *= volume;
+    sample = sample>>16;
+    sample += 2048;
+    DAC->DHR12R1 = sample;
+    */
+
+    for (int i = 0; i <= noteListIndex; i++) {
+        if(noteList[i]==0) {break;}
+        offsetlist[i] = (offsetlist[i] + steplist[i]);
+        if (offsetlist[i] > (NSHIFT16)) {offsetlist[i] -= NSHIFT16;}
+        tmpsmp = wavetable[wavenum][offsetlist[i]>>16];
+        tmpsmp = tmpsmp >> 3;
+        sample += tmpsmp;
+    }
     sample *= volume;
     sample = sample>>16;
     sample += 2048;
@@ -291,6 +334,7 @@ int main(void)
     init_usart1();
 
     init_tim7();
+    //set_freq(440);
 
     check_on_off();
 }
