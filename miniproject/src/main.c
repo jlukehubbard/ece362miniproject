@@ -10,7 +10,6 @@
 #define VOLUME 2048
 #define N 1000
 #define NSHIFT16 (N << 16)
-//#define RATE 20000
 #define RATE 20000
 int step = 0;
 int offset = 0;
@@ -24,7 +23,20 @@ uint16_t oledDisp[34] =
 const char hexToChar[] =
 { 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x41,0x42,0x43,0x44,0x45,0x46 };
 
+
+int head = 0;
+int tail = 0;
+#define BUFFER_SIZE 16
+#define ERROR_EMPTY 0x00
+#define ERROR_FULL 0x00
+
+uint8_t buffer[BUFFER_SIZE];
+
+
 void set_freq(float);
+uint8_t fifo_read(void);
+uint8_t fifo_write(uint8_t);
+void init_noteList(void);
 
 void nano_wait(unsigned int n) {
     asm(    "        mov r0,%0\n"
@@ -51,8 +63,13 @@ void init_usart1(void){
     USART1->CR1 |= USART_CR1_RE; //RECIEVING
     USART1->CR1 |= USART_CR1_TE; //TRANSMITTING
     USART1->CR2 &= ~(USART_CR2_STOP);
+
     //TESTING
     USART1->CR3 |= USART_CR3_ONEBIT;
+    USART1->CR1 |= USART_CR1_RXNEIE; //INTERRUPT ENABLE
+    NVIC->ISER[0] |= 1 << USART1_IRQn;
+    NVIC_SetPriority(USART1_IRQn,0);
+
 
     USART1->BRR = 0x600;
 
@@ -62,19 +79,30 @@ void init_usart1(void){
     while((USART1->ISR & USART_ISR_REACK) == 0); //RECIEVING
 }
 uint8_t getchar(void) {
-
-    while (!(USART1->ISR & USART_ISR_RXNE)){
-        if(USART1->ISR & USART_ISR_ORE){
-            init_noteList();
-            USART1->ICR |= (USART_ICR_ORECF);
-        }
-    }
-    if(USART1->ISR & USART_ISR_ORE){
-         init_noteList();
-         USART1->ICR |= (USART_ICR_ORECF);
-    }
-    int c = USART1->RDR;
+	uint8_t c = 0x00;
+	c = fifo_read();
     return c;
+}
+
+void USART1_IRQHandler(void){
+	uint8_t c = USART1 -> RDR;
+	if (((USART1 -> ISR) & USART_ISR_NE) || ((USART1 -> ISR) & USART_ISR_FE) || ((USART1 -> ISR) & USART_ISR_ORE)) {
+		init_noteList();
+		tail = head;
+	} else {
+		fifo_write(c);
+	}
+}
+uint8_t fifo_read(void) {
+   while(head == tail);
+   tail = (tail + 1) % BUFFER_SIZE;
+   return buffer[tail];
+}
+uint8_t fifo_write(uint8_t val) {
+   if (head + 1 == tail) return ERROR_FULL;
+   head = (head + 1) % BUFFER_SIZE;
+   buffer[head] = val;
+   return buffer[head];
 }
 
 //#define circBuf
