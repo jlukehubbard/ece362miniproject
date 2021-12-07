@@ -1,0 +1,11 @@
+Sine:
+wavetable[i][ii] = 32767 * sin(2 * M_PI * ii / N);
+
+Triangle:
+wavetable[i][ii] = 32767 * (2 / M_PI) * asin(sin(2 * M_PI * ii / N));
+
+Sawtooth:
+wavetable[i][ii] = 32767 * (-2 / M_PI) * atan( cos(2 * M_PI * ii / N) / sin(2 * M_PI * ii / N) );
+
+Combination:
+wavetable[i][ii] = 32767 * (2 / M_PI) * asin(sin(2 * M_PI * ii / N)) + 32767 * (-2 / M_PI) * atan( cos(2 * M_PI * ii / N) / sin(2 * M_PI * ii / N) );
