@@ -15,7 +15,7 @@ startup/%.o: ../startup/%.s
 	@echo 'Building file: $<'
 	@echo 'Invoking: MCU GCC Assembler'
 	@echo $(PWD)
-	arm-none-eabi-as -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -I"/home/james/git/ece362miniproject/miniproject/StdPeriph_Driver/inc" -I"/home/james/git/ece362miniproject/miniproject/inc" -I"/home/james/git/ece362miniproject/miniproject/CMSIS/device" -I"/home/james/git/ece362miniproject/miniproject/CMSIS/core" -g -o "$@" "$<"
+	arm-none-eabi-as -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -I"/home/shay/a/hubbar31/git/ece362miniproject/miniproject/StdPeriph_Driver/inc" -I"/home/shay/a/hubbar31/git/ece362miniproject/miniproject/inc" -I"/home/shay/a/hubbar31/git/ece362miniproject/miniproject/CMSIS/device" -I"/home/shay/a/hubbar31/git/ece362miniproject/miniproject/CMSIS/core" -g -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

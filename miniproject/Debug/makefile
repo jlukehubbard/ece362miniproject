@@ -31,10 +31,10 @@ endif
 all: miniproject.elf
 
 # Tool invocations
-miniproject.elf: $(OBJS) $(USER_OBJS) /home/james/git/ece362miniproject/miniproject/LinkerScript.ld
+miniproject.elf: $(OBJS) $(USER_OBJS) /home/shay/a/hubbar31/git/ece362miniproject/miniproject/LinkerScript.ld
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU GCC Linker'
-	arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -T"/home/james/git/ece362miniproject/miniproject/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "miniproject.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
+	arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -T"/home/shay/a/hubbar31/git/ece362miniproject/miniproject/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "miniproject.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build

@@ -5,6 +5,7 @@
 #include <string.h> // for memset() declaration
 #include <math.h>   // for MA_PI
 #include "interrupts.h"
+#include "midi.h"
 
 #define WAVENUM 4
 #define VOLUME 2048
@@ -62,4 +63,12 @@ void EXTI0_1_IRQHandler(void){
         return;
     }
     pedal = 1;
+}
+
+void EXTI2_3_IRQHandler(void) {
+    ProgramChange((prog + 1) % WAVENUM);
+}
+
+void EXTI4_15_IRQHandler(void) {
+    volume = (volume + 128) % 4096;
 }

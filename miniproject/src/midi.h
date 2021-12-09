@@ -19,6 +19,7 @@ uint8_t midiState;
 uint16_t usartBuffer[BUFFER_MAX_SIZE];
 int usartHead;
 int usartTail;
+uint8_t prog = 0;
 #define ERROR_EMPTY 0x00
 #define ERROR_FULL 0x00
 
@@ -29,3 +30,4 @@ void displayNoteList(void);
 void initMidiMsg(void);
 void midiStateMachine(uint8_t);
 void midiEventHandler(void);
+void ProgramChange(uint8_t programNumber);

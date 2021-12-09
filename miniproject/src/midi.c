@@ -5,7 +5,7 @@
 #include <math.h>
 #include "interrupts.h"
 
-uint8_t prog = 0;
+
 
 void initUsartBuffer(void){
     for(int i=0;i<BUFFER_MAX_SIZE;i++){
@@ -99,4 +99,8 @@ void adjustVel() {
             noteList[i][1] = 0x00;
         }
     }
+}
+
+void ProgramChange(uint8_t programNumber) {
+    prog = programNumber;
 }
