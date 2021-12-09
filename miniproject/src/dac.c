@@ -5,9 +5,22 @@
 
 void initWavetable(void) {
     volume = 2048;
-    for(int i=0; i < WAVENUM; i++){
-        for(int ii=0; ii < N; ii++){
-            wavetable[i][ii] = 32767 * sin(2 * M_PI * ii / N);
+    for(int program = 0; program < WAVENUM; program++){
+        for(int ii = 0; ii < N; ii++){
+        	switch(program) {
+        	case 0: //Sine
+        		wavetable[program][ii] = 32767 * sin(2 * M_PI * ii / N);
+        		break;
+        	case 1: //Triangle
+        		wavetable[program][ii] = 32767 * (2 / M_PI) * asin(sin(2 * M_PI * ii / N));
+        		break;
+        	case 2: //Sawtooth
+        		wavetable[program][ii] = 32767 * (-2 / M_PI) * atan( cos(2 * M_PI * ii / N) / sin(2 * M_PI * ii / N) );
+        		break;
+        	case 3: //Combination
+        		wavetable[program][ii] = 16384 * (2 / M_PI) * asin(sin(2 * M_PI * ii / N)) + 16384 * (-2 / M_PI) * atan( cos(2 * M_PI * ii / N) / sin(2 * M_PI * ii / N) );
+        		break;
+        	}
         }
     }
 }

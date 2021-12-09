@@ -12,6 +12,7 @@ enum midiStates {
     WAITKEY,
     WAITVEL,
     ADDNOTE,
+	PROGRAMCHANGE
 };
 uint8_t midiState;
 #define BUFFER_MAX_SIZE 16

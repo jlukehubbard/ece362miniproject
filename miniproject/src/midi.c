@@ -5,6 +5,8 @@
 #include <math.h>
 #include "interrupts.h"
 
+uint8_t prog = 0;
+
 void initUsartBuffer(void){
     for(int i=0;i<BUFFER_MAX_SIZE;i++){
         usartBuffer[i] = 0x00;
