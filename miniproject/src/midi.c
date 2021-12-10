@@ -43,12 +43,27 @@ void midiStateMachine(uint8_t byte){
     switch(midiState){
     case STATUS:    if(byte == 0x90) {midiState=WAITKEY; midiMsg |= (1<<7);}
                     else if(byte == 0x80) {midiState=WAITKEY; midiMsg &= ~(1<<7);}
+                    else if (byte == 0xc0) {midiState=WAITPROGRAM;}
+                    else if (byte == 0xe0) {midiState=WAITPITCHLOW;}
                     break;
     case WAITKEY:   midiMsg|=byte<<8; midiState=WAITVEL; break;
     case WAITVEL:   midiMsg|=byte&0x7F; midiState=ADDNOTE;
     case ADDNOTE:   fifoWrite(midiMsg);
                     initMidiMsg();
                     midiState = STATUS; break;
+    case WAITPROGRAM:
+                    ProgramChange(byte % WAVENUM);
+                    midiState = STATUS;
+                    break;
+
+    case WAITPITCHLOW:
+                    pitch = byte;
+                    midiState = WAITPITCHHIGH;
+                    break;
+    case WAITPITCHHIGH:
+                    pitch |= byte << 7;
+                    midiState = STATUS;
+                    break;
     default:        initUsartBuffer();
     }
 }
@@ -102,5 +117,6 @@ void adjustVel() {
 }
 
 void ProgramChange(uint8_t programNumber) {
-    prog = programNumber;
+    wavenum = programNumber;
+    displayProgram();
 }

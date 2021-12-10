@@ -1,6 +1,7 @@
 #include "stm32f0xx.h"
 #include "midi.h"
 #include "display.h"
+#include "dac.h"
 
 uint16_t oledDisp[34] =
 { 0x002, 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' , 0x200|' ' ,
@@ -125,6 +126,40 @@ void displayBuffer(){
     oledDisp[place++] = 0x200|' ';
 }
 
+void displayProgram(){
+    //FFFF FFFF
+    displayOff();
+    int place = 2;
+    switch (wavenum) {
+    case 0:
+        oledDisp[place++] = 0x200|'S';
+        oledDisp[place++] = 0x200|'I';
+        oledDisp[place++] = 0x200|'N';
+        break;
+    case 1:
+        oledDisp[place++] = 0x200|'T';
+        oledDisp[place++] = 0x200|'R';
+        oledDisp[place++] = 0x200|'I';
+        break;
+    case 2:
+        oledDisp[place++] = 0x200|'S';
+        oledDisp[place++] = 0x200|'A';
+        oledDisp[place++] = 0x200|'W';
+        break;
+    case 3:
+        oledDisp[place++] = 0x200|'I';
+        oledDisp[place++] = 0x200|'D';
+        oledDisp[place++] = 0x200|'K';
+        break;
+    case 4:
+        oledDisp[place++] = 0x200|'O';
+        oledDisp[place++] = 0x200|'R';
+        oledDisp[place++] = 0x200|'G';
+        break;
+    }
+
+}
+
 void displayOff(){
     for(int i=1;i<17;i++){
         oledDisp[i] = 0x200|' ';
@@ -133,3 +168,4 @@ void displayOff(){
         oledDisp[i] = 0x200|' ';
     }
 }
+

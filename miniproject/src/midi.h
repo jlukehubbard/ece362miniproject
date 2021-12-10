@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 uint16_t midiMsg;
 #define READY_TO_READ_FLAG 1
 #define ALREADY_READ_FLAG 0
@@ -12,14 +14,18 @@ enum midiStates {
     WAITKEY,
     WAITVEL,
     ADDNOTE,
-	PROGRAMCHANGE
+	PROGRAMCHANGE,
+	PITCHWHEEL,
+	WAITPROGRAM,
+	WAITPITCHHIGH,
+	WAITPITCHLOW
 };
 uint8_t midiState;
 #define BUFFER_MAX_SIZE 16
 uint16_t usartBuffer[BUFFER_MAX_SIZE];
 int usartHead;
 int usartTail;
-uint8_t prog = 0;
+int pitch;
 #define ERROR_EMPTY 0x00
 #define ERROR_FULL 0x00
 
@@ -31,3 +37,6 @@ void initMidiMsg(void);
 void midiStateMachine(uint8_t);
 void midiEventHandler(void);
 void ProgramChange(uint8_t programNumber);
+void initUsartBuffer(void);
+void initNoteList(void);
+

@@ -6,16 +6,11 @@
 #include <math.h>   // for MA_PI
 #include "interrupts.h"
 #include "midi.h"
+#include "display.h"
+#include "dac.h"
 
-#define WAVENUM 4
-#define VOLUME 2048
-#define N 1000
-#define RATE 20000
-int step = 0;
-int offset = 0;
-int volume = 2048;
-short int wavetable[WAVENUM][N];
-uint8_t wavenum = 0;
+
+
 
 //===========================================================================
 // 2.1 Configuring GPIO
@@ -66,9 +61,12 @@ void EXTI0_1_IRQHandler(void){
 }
 
 void EXTI2_3_IRQHandler(void) {
-    ProgramChange((prog + 1) % WAVENUM);
+    EXTI -> PR |= EXTI_PR_PR2;
+    ProgramChange(++wavenum % WAVENUM);
+    displayProgram();
 }
 
 void EXTI4_15_IRQHandler(void) {
-    volume = (volume + 128) % 4096;
+    EXTI -> PR |= EXTI_PR_PR4;
+    volume = (volume + 1024) % 4096;
 }

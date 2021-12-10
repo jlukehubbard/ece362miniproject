@@ -1,4 +1,4 @@
-#define WAVENUM 1
+#define WAVENUM 5
 #define VOLUME 2048
 #define N 1000
 #define NSHIFT16 (N << 16)

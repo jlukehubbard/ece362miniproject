@@ -14,8 +14,6 @@
 #include <math.h>
 #include "interrupts.h"
 
-
-
 void initUsart1(void){
 
     //CONFIGURE PA9 AND PA10
@@ -63,6 +61,7 @@ void USART1_IRQHandler(void) {
 int main(void)
 {
     pedal = 0;
+    wavenum = 0;
 
     initNoteList();
     initUsartBuffer();
@@ -78,12 +77,12 @@ int main(void)
 
     enable_ports();
     init_interrupts();
+    displayProgram();
 
     for(;;) {
         if(usartHead != usartTail){
             midiEventHandler();
         }
-        //displayNoteList();
         if(dacScale > 10000) {  //Every Half Second
             dacScale = 0;
             adjustVel();
